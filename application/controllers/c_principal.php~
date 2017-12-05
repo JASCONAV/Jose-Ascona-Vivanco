@@ -1,0 +1,151 @@
+<?php
+
+if (!defined('BASEPATH'))
+    exit('No direct script access allowed');
+
+class c_principal extends CI_Controller {
+
+    function __construct() {
+        //llamada al constructor del CI para la clase
+        parent::__construct();
+        session_start();
+    }
+
+    public function index() {
+        //Permite que la vista que llame esta función, obtenga la URL del servidor.
+        $this->load->helper('url');
+        $this->load->view('v_principal');
+    }
+
+    public function VRegistrarDocumento() {
+        //Permite que la vista que llame esta función, obtenga la URL del servidor.
+        $this->load->helper('url');
+        $this->load->model('m_main');
+        $data['lista_areas'] = $this->cargar_areas();
+        $this->load->view('v_registrardocumento', $data);
+    }
+
+    public function VAnexarDocumento() {
+        //Permite que la vista que llame esta función, obtenga la URL del servidor.
+        $this->load->helper('url');
+        $this->load->view('v_anexardocumento');
+    }
+
+    public function VOperador_registrar() {
+        //Permite que la vista que llame esta función, obtenga la URL del servidor.
+        $this->load->helper('url');
+        $this->load->model('m_main');
+        $data['SelectTipoUsuario'] = $this->cargar_tipo_usuario();
+        $this->load->view('v_registrar_operador', $data);
+    }
+
+    public function VOperador_CambiarPass() {
+        //Permite que la vista que llame esta función, obtenga la URL del servidor.
+        $this->load->helper('url');
+        $this->load->view('v_cambiar_pass');
+    }
+    
+    public function v_consultaxoperador() {
+        //Permite que la vista que llame esta función, obtenga la URL del servidor.
+        $this->load->helper('url');
+        $this->load->view('v_consultaxoperador');
+    }
+    
+    public function v_consultaxsolicitante() {
+        //Permite que la vista que llame esta función, obtenga la URL del servidor.
+        $this->load->helper('url');
+        $this->load->view('v_consultaxsolicitante');
+    }
+    
+    public function v_consultaxtipocarga() {
+        //Permite que la vista que llame esta función, obtenga la URL del servidor.
+        $this->load->helper('url');
+        $this->load->view('v_consultaxtipocarga');
+    }
+
+    public function cargar_areas() {
+        $this->load->model('m_main');
+        $result = $this->m_main->lista_tipo_carga();
+        $select = '';
+        foreach ($result as $fila) {
+            $select .= "<option value='$fila->codTipoCarga'>" . $fila->nomTipoCarga . " - " . $fila->nomSubTipoCarga . "</option>";
+        }
+        return $select;
+    }
+
+	public function cargar_tipo_usuario() {
+        $this->load->model('m_main');
+        $result = $this->m_main->m_lista_tipo_usuario();
+        $select = '';
+        foreach ($result as $fila) {
+            $select .= "<option value='$fila->codTipoUser'>" . $fila->tipoUsuario . "</option>";
+        }
+        return $select;
+    }
+    
+    public function actualizarPassOperador() {
+        $this->load->model('m_main');
+        $user = $_POST['usuario'];
+        $pass = $_POST['Npass'];
+        $result = $this->m_main->m_actualizar_pass_usuario($user, $pass);
+    }
+    
+    public function get_solicitante_documento() {
+        $this->load->model('m_main');
+        $result = $this->m_main->m_get_solicitante_rd($_POST['param']);
+        $data = '';
+        foreach ($result as $fila) {
+            $data .= "<input type='hidden' id='inputSoliciNomb' value='$fila->nombreSoli'>";
+            $data .= "<input type='hidden' id='inputSoliciApep' value='$fila->apePatSoli'>";
+            $data .= "<input type='hidden' id='inputSoliciAma' value='$fila->apeMatSoli'>";
+        }
+        echo $data;
+    }
+    
+    public function m_get_recurrente_rd() {
+        $this->load->model('m_main');
+        $result = $this->m_main->m_get_recurrente_rd($_POST['param']);
+        $data = '';
+        foreach ($result as $fila) {
+            $data .= "<input type='hidden' id='inputSoliciNomb' value='$fila->nomRecu'>";
+            $data .= "<input type='hidden' id='inputSoliciApep' value='$fila->apePatrecu'>";
+            $data .= "<input type='hidden' id='inputSoliciAma' value='$fila->apeMatRecu'>";
+        }
+        echo $data;
+    }
+
+    public function insertar_documento() {
+        $this->load->model('m_main');
+        $this->m_main->m_insertar_documento($_POST['nroDocumento'], $_POST['fechaIngreso'], $_POST['asunto'], $_POST['numeroFolios'], 
+                                            $_POST['recurrente_codRecu'], $_POST['solicitante_codSoli'], $_SESSION['LOGIN_USER'],
+                                            $_POST['tipo_de_documento_codTipoDoc'], $_POST['tipo_de_carga_codTipoCarga']);
+  /*nroDocumento, $fechaIngreso, $asunto, $numeroFolios, 
+  $recurrente_codRecu, $solicitante_codSoli, $usuario_nomUsu, 
+  $tipo_de_documento_codTipoDoc, $tipo_de_carga_codTipoCarga ) {*/
+    }
+
+	public function insertar_operador() {
+        $this->load->model('m_main');
+        $this->m_main->m_insertar_operador($_POST['inputUsuario'], $_POST['inputDni'], $_POST['inputClave'], $_POST['inputApMaterno'], 
+                                            $_POST['inputAppaterno'], $_POST['inputNombre'], $_POST['inputNacimiento'],
+                                            $_POST['sexo'], $_POST['inputTelefono'],$_POST['selectTipoUsuario']);
+     //$nomUsu,$DNI,$clave,$apeMat,$apePat,$nombre,$fechNac,$sexo,$telefono,$tipoUsuario,$codTipoUser,$tipo_usuario_codTipoUser
+    }
+
+	public function ListaUsuarios() {
+        //Permite que la vista que llame esta función, obtenga la URL del servidor.
+        $this->load->model('m_main');
+        $resul = $this->m_main->MListaUsuarios();
+        $item = 1;
+        foreach ($resul as $fila) {
+            echo "<tr><td>$item</td><td>" . $fila->nombre. ' ' . $fila->apePat .''.$fila->apeMat "</td><td>" .
+            $fila->DNI . "</td><td>" . $fila->sexo. "</td><td>" .
+            $fila->fechNac . "</td><td>" .
+            "<td><a>Editer</a><a>Eliminar</a></td></tr>";
+            $item++;
+        }
+    }
+    
+}
+
+?>

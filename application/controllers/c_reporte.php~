@@ -1,0 +1,399 @@
+<?php
+if (!defined('BASEPATH'))
+    exit('No direct script access allowed');
+
+class c_reporte extends CI_Controller {
+
+    function __construct() {
+        //llamada al constructor del CI para la clase
+        parent::__construct();
+    }
+
+    //el index està definida por la priemra pantalla que es la iterfaz de manejo de usuario
+    public function index() {
+        $this->load->library(array('fpdf17/PDF_MC_Table.php'));
+        $pdf = new PDF_MC_Table();
+        $pdf->AddPage();
+        //***************************************************************************
+        //Part 1 Header
+        //***************************************************************************
+        $pdf->Image('LogoCOLOR.png', 10, 8, 40);
+        $pdf->SetFont('Arial', 'B', 9);
+        //$pdf->Cell(47, 3, '', 0, 0);;
+        $pdf->Cell(190, 4, utf8_decode('MUNICIPALIDAD DISTRITAL DE LIMA'), 0, 0, 'C');
+        $pdf->Ln();
+        $pdf->SetFont('Arial', '', 8);
+        $pdf->Cell(190, 4, utf8_decode(''), 0, 0, 'C');
+         $pdf->Image('logo-municipalidad-de-lima-metropolitana.jpg', 170, 8, 20);
+        //Part2 2 Header
+        $pdf->Output('cotizacion.pdf', 'I');
+    }
+
+    public function orden_pedido() {
+        $this->load->model(array('m_ventas', 'm_reporte'));
+        $resul = $this->m_ventas->m_documento_cotizacion($_GET['id']);
+        $PDFarray_documento = "";
+        foreach ($resul as $fila) {
+            $PDFarray_documento['ruc'] = $fila->RUC;
+            $PDFarray_documento['descripcion_cliente'] = $this->m_ventas->m_descripcion_cliente_x_ruc($fila->RUC);
+            $PDFarray_documento['fecha_emision'] = $fila->Fecha;
+            $PDFarray_documento['referencia'] = $fila->Ref_01;
+            //$arraycliente = $this->m_ventas->m_array_cliente_x_ruc($fila->RUC);
+            $PDFarray_documento['direccion'] = $this->m_ventas->m_descripcion_direccion_x_ruc($fila->RUC, $fila->ID_Direccion);
+            $PDFarray_documento['telefonos'] = $this->m_ventas->m_Telefono_cliente_x_ruc($fila->RUC);
+            $PDFarray_documento['fax'] = $this->m_ventas->m_fax_cliente_x_ruc($fila->RUC);
+            $PDFarray_documento['email'] = $this->m_ventas->m_email_cliente_x_ruc($fila->RUC);
+            $PDFarray_documento['id_contacto'] = $fila->ID_Contacto;
+            $PDFarray_documento['sub_total'] = $fila->Importe_Bruto;
+            if ($fila->Incluye_IGV == 0) {
+                $PDFarray_documento['Iigv'] = 'NO INCLUYEN IGV';
+            } else {
+                $PDFarray_documento['Iigv'] = 'INCLUYEN IGV';
+            }
+            $PDFarray_documento['igv'] = $fila->Importe_IGV;
+            $PDFarray_documento['total'] = $fila->Importe_Total;
+            $PDFarray_documento['contacto'] = $this->m_ventas->m_getContacto($fila->RUC, $fila->ID_Contacto);
+            $PDFarray_documento['ID_Moneda'] = $fila->ID_Moneda;
+            $PDFarray_documento['Tgarantia'] = $fila->ID_Tiempo_Garantia;
+            $PDFarray_documento['Fpago'] = $fila->ID_Forma_Pago;
+            $PDFarray_documento['Voferta'] = $fila->ID_Validez_Oferta;
+            $PDFarray_documento['ID_Cotizador'] = $fila->ID_Cotizador;
+        }
+        //Permite que la vista que llame esta función, obtenga la URL del servidor.
+        /* $this->load->library(array('fpdf17/fpdf'));
+          $pdf = new FPDF(); */
+        $this->load->library(array('fpdf17/PDF_MC_Table.php'));
+        //$pdf = new FPDF();
+        $pdf = new PDF_MC_Table();
+        $pdf->AddPage();
+        //Part 1 Header
+        //***************************************************************************
+        $pdf->Image('Logo.JPG', 10, 8, 33);
+        $pdf->SetFont('Arial', 'B', 9);
+        //$pdf->Cell(47, 3, '', 0, 0);;
+        $pdf->Cell(190, 4, utf8_decode('ORDEN DE PEDIDO'), 0, 0, 'C');
+        $pdf->Ln();
+        $pdf->SetFont('Arial', '', 8);
+        $pdf->Cell(190, 4, utf8_decode($_GET['id']), 0, 0, 'C');
+        //Part2 2 Header
+        //***************************************************************************
+        $pdf->Ln(25);
+        $pdf->SetFont('Arial', 'B', 9);
+        $pdf->Cell(34, 3, 'ARCOI SAC', 0, 0, 'C');
+        $pdf->Ln();
+        $pdf->SetFont('Arial', '', 8);
+        $pdf->Cell(34, 3, 'RUC: 2051351497', 0, 0, 'C');
+        //Part3 3 Header
+        //***************************************************************************
+        $pdf->Ln(8);
+        $pdf->SetXY(43, 24); //$pdf->SetXY($x, $y)
+        $pdf->SetFont('Arial', 'B', 8);
+        $pdf->Cell(22, 4, utf8_decode('Cliente:'), 0, 0, 'L');
+        $pdf->SetFont('Arial', '', 8);
+        $pdf->Cell(80, 4, utf8_decode($fila->RUC . ' ' . $PDFarray_documento['descripcion_cliente']), 0, 0, 'L');
+        $pdf->SetFont('Arial', 'B', 8);
+        $pdf->Cell(16, 4, utf8_decode('Teléfonos:'), 0, 0, 'L');
+        $pdf->SetFont('Arial', '', 8);
+        $pdf->Cell(20, 4, utf8_decode($PDFarray_documento['telefonos']), 0, 0, 'L');
+        $pdf->SetXY(43, 28); //$pdf->SetXY($x, $y)
+        $pdf->SetFont('Arial', 'B', 8);
+        $pdf->Cell(22, 4, utf8_decode('Dirección:'), 0, 0, 'L');
+        $pdf->SetFont('Arial', '', 8);
+        $pdf->Cell(80, 4, utf8_decode($PDFarray_documento['direccion']), 0, 0, 'L');
+        $pdf->SetFont('Arial', 'B', 8);
+        $pdf->Cell(16, 4, utf8_decode('Fax:'), 0, 0, 'L');
+        $pdf->SetFont('Arial', '', 8);
+        $pdf->Cell(20, 4, utf8_decode($PDFarray_documento['fax']), 0, 0, 'L');
+        $pdf->SetXY(43, 32); //$pdf->SetXY($x, $y)
+        $pdf->SetFont('Arial', 'B', 8);
+        $pdf->Cell(22, 4, utf8_decode('Contacto:'), 0, 0, 'L');
+        $pdf->SetFont('Arial', '', 8);
+        $pdf->Cell(80, 4, utf8_decode($PDFarray_documento['contacto']), 0, 0, 'L');
+        $pdf->SetFont('Arial', 'B', 8);
+        $pdf->Cell(16, 4, utf8_decode('Email:'), 0, 0, 'L');
+        $pdf->SetFont('Arial', '', 8);
+        $pdf->Cell(20, 4, utf8_decode(''), 0, 0, 'L');
+        $pdf->SetXY(43, 36); //$pdf->SetXY($x, $y)
+        $pdf->SetFont('Arial', 'B', 8);
+        $pdf->Cell(22, 4, utf8_decode('Fecha Emisión:'), 0, 0, 'L');
+        $pdf->SetFont('Arial', '', 8);
+        $pdf->Cell(80, 4, $this->RetornarFecha($PDFarray_documento['fecha_emision']), 0, 0, 'L');
+        $pdf->SetFont('Arial', 'B', 8);
+        $pdf->Cell(16, 4, utf8_decode('Ref./:'), 0, 0, 'L');
+        $pdf->SetFont('Arial', '', 8);
+        $pdf->Cell(20, 4, utf8_decode($PDFarray_documento['referencia']), 0, 0, 'L');
+        //***************************************************************************
+        // Line break
+        $pdf->Ln(15);
+        $pdf->SetFont('Arial', 'B', 7);
+        $pdf->Cell(6, 4, '#', 0, 0, 'R'); //1
+        $pdf->Cell(21, 4, utf8_decode('Código'), 0, 0, ''); //2
+        $pdf->Cell(87, 4, utf8_decode('Descripción'), 0, 0, ''); //3
+        $pdf->Cell(8, 4, utf8_decode('UM'), 0, 0, ''); //4
+        $pdf->Cell(15, 4, utf8_decode('Cantidad'), 0, 0, 'R'); //5
+        $pdf->Cell(10, 4, utf8_decode('Costo'), 0, 0, 'R'); //6
+        $pdf->Cell(12, 4, utf8_decode('% Dscto'), 0, 0, 'R'); //7
+        $pdf->Cell(16, 4, utf8_decode('Precio'), 0, 0, 'R'); //8
+        $pdf->Cell(16, 4, utf8_decode('TOTAL'), 0, 0, 'R'); //
+        $pdf->Ln();
+        $pdf->Cell(190, 0, '', 1, 0, 'R');
+        $pdf->Ln();
+        //Tabla lista productos Cuerpo
+        //***************************************************************************
+        $pdf->SetFont('Arial', '', 7);
+        $resul = $this->m_reporte->m_listado_documento_detalle($_GET['id']);
+        $pdf->SetWidths(array(6, 21, 87, 8, 15, 10, 12, 16, 16));
+        foreach ($resul as $fila) {
+            $pdf->SetAligns(array('R', 'R', 'L', 'L', 'R', 'R', 'R', 'R', 'R'));
+            $pdf->Row(array($fila->Item, $fila->ID_Item, $this->m_reporte->m_articulo_por_codigo($fila->ID_Item), $this->m_reporte->m_descripcionUm_por_codigo($fila->ID_Unidad),
+                number_format($fila->Cantidad, 2, '.', ''), number_format($fila->Costo_MN, 2, '.', ''), '0,00', $fila->Costo_MN, number_format(($fila->Cantidad * $fila->Costo_MN), 2, '.', '')), 0);
+            //foreach($cadena as $col)
+            /* $pdf->Cell(6, 4, $fila->Item, 0, 0, 'R'); //1
+              $pdf->Cell(21, 4, $fila->ID_Item, 0, 0, ''); //2
+              $pdf->Cell(87, 4, $this->m_reporte->m_articulo_por_codigo($fila->ID_Item), 0, 0, ''); //3
+              $pdf->Cell(8, 4, $this->m_reporte->m_descripcionUm_por_codigo($fila->ID_Unidad), 0, 0, ''); //4
+              $pdf->Cell(15, 4, number_format($fila->Cantidad, 2, '.', ''), 0, 0, 'R'); //5
+              $pdf->Cell(10, 4, number_format($fila->Costo_MN, 2, '.', ''), 0, 0, 'R'); //6
+              $pdf->Cell(12, 4, '0.00', 0, 0, 'R'); //7
+              $pdf->Cell(16, 4, $fila->Costo_MN, 0, 0, 'R'); //8
+              $pdf->Cell(16, 4, number_format(($fila->Cantidad * $fila->Costo_MN), 2, '.', ''), 0, 0, 'R'); //
+              $pdf->Ln(); */
+        }
+        //***************************************************************************
+        $pdf->Cell(190, 0, '', 1, 0, 'R');
+        $pdf->Ln();
+        // Line break
+        $pdf->SetFont('Arial', 'B', 9);
+        $pdf->Cell(140, 5, '', 0, 0, '');
+        $pdf->Cell(25, 5, 'Sub-Total S/.:', 1, 0, ''); //1
+        $pdf->SetFont('Arial', '', 7);
+        $pdf->Cell(26, 5, number_format($PDFarray_documento['sub_total'], 2, '.', ''), 1, 0, 'R'); //2
+        $pdf->Ln();
+        $pdf->SetFont('Arial', 'B', 9);
+        $pdf->Cell(140, 5, '', 0, 0, '');
+        $pdf->Cell(25, 5, 'I.G.V.:(18%)', 1, 0, ''); //1
+        $pdf->SetFont('Arial', '', 7);
+        $pdf->Cell(26, 5, number_format($PDFarray_documento['igv'], 2, '.', ''), 1, 0, 'R'); //2
+        $pdf->Ln();
+        $pdf->SetFont('Arial', 'B', 9);
+        $pdf->Cell(140, 5, '', 0, 0, '');
+        $pdf->Cell(25, 5, 'TOTAL S/.:', 1, 0, ''); //1
+        $pdf->SetFont('Arial', '', 7);
+        $pdf->Cell(26, 5, number_format($PDFarray_documento['total'], 2, '.', ''), 1, 0, 'R'); //2
+        $pdf->Ln();
+        $pdf->SetWidths(array(25, 26));
+        $pdf->SetAligns(array('L', 'R'));
+        //***************************************************************************
+        $pdf->Output('orden_pedido.pdf', 'I');
+    }
+
+    public function gui_remision() {
+        $this->load->library(array('fpdf17/PDF_MC_Table.php'));
+        $this->load->model(array('m_reporte'));
+        $PDFarray_documento = "";        
+        
+        $resulMDguiaR = $this->m_reporte->m_listado_movimiento_cabecera($_GET['id']);
+        $resulMD = $this->m_reporte->m_listado_movimiento_detalle($_GET['id']);
+        
+        foreach ($resulMDguiaR as $fila) {
+            $PDFarray_documento['MCfecha'] = $fila->Fecha_Emision;
+            $PDFarray_documento['o_compra'] = $fila->Ref_01;
+            //------------------------------------------------------------------
+            $PDFarray_documento['senores'] = $fila->Razon_Social;
+            $PDFarray_documento['ruc_nr'] = $fila->RUC;
+            //------------------------------------------------------------------
+            $PDFarray_documento['punto_llegada'] = $fila->direccion;
+        }
+        
+        ///$DireccionPcliente = $this->m_reporte->m_getdireccionPcliente($PDFarray_documento['ruc_nr']);
+        ///$DatosConductor = $this->m_reporte->m_datos_conductor($PDFarray_documento['ruc_nr']);
+        /*foreach ($resulMDguiaR as $fila) {
+            $PDFarray_documento['o_compra'] = $fila->Ref_01;
+            //------------------------------------------------------------------
+            $PDFarray_documento['senores'] = $fila->Fecha;
+            $PDFarray_documento['direccion'] = $fila->Fecha;
+            $PDFarray_documento['ruc_nr'] = $fila->Fecha;
+            //------------------------------------------------------------------
+            $PDFarray_documento['punto_partida'] = $fila->Ref_01;
+            $PDFarray_documento['punto_llegada'] = '';//$this->m_ventas->m_descripcion_direccion_x_ruc($fila->RUC, $fila->ID_Direccion);
+            $PDFarray_documento['agencia'] = '';//$this->m_ventas->m_Telefono_cliente_x_ruc($fila->RUC);
+        }*/
+        $pdf = new PDF_MC_Table();
+        $pdf->AddPage();
+        //Part 1 Header
+        //***************************************************************************
+        $pdf->Ln(8);
+        $pdf->SetFont('Arial', '', 9);
+        $pdf->Cell(47, 3, '', 0, 0);
+        // Title
+        $pdf->Cell(24, 3, utf8_decode($PDFarray_documento['o_compra']), 0, 0, 'C');
+        $pdf->Cell(22, 3, '', 0, 0, 'C');
+        $pdf->Cell(22, 3, utf8_decode($this->RetornarFecha($PDFarray_documento['MCfecha'])), 0, 0, 'C');
+        //Part2 2 Header
+        //***************************************************************************
+        $pdf->Ln(9);
+        $pdf->SetFont('Arial', '', 9);
+        $pdf->Cell(10, 3, utf8_decode(''), 0, 0, 'L');
+        $pdf->Cell(120, 3, utf8_decode($PDFarray_documento['senores']), 0, 0, 'L');
+        //Part3 3 Header
+        //***************************************************************************
+        $pdf->Ln(8);
+        $pdf->SetFont('Arial', '', 9);
+        $pdf->Cell(10, 3, utf8_decode(''), 0, 0, 'L');
+        $pdf->Cell(80, 3, utf8_decode($this->m_reporte->m_getdireccionPcliente($PDFarray_documento['ruc_nr'])), 0, 0, 'L');
+        $pdf->Cell(75, 3, '', 0, 0, 'L');
+        $pdf->SetFont('Arial', '', 18);
+        //$pdf->Cell(20, 7, '0018063', 0, 0, 'L');
+        $pdf->Cell(20, 7, '', 0, 0, 'L');
+        $pdf->Ln();
+        //Part4 4 Header
+        //***************************************************************************
+        $pdf->Ln(3);
+        $pdf->SetFont('Arial', '', 9);
+        $pdf->Cell(10, 3, utf8_decode(''), 0, 0, 'L');
+        $pdf->Cell(80, 3, utf8_decode($PDFarray_documento['ruc_nr']), 0, 0, 'l');
+        $pdf->Ln();
+        //***************************************************************************
+        // Line break
+        $pdf->Ln(10);
+        //Tabla lista productos Cuerpo
+        //***************************************************************************
+        //$array_table = $_POST['lista_productos'];
+        $pdf->SetFont('Arial', '', 9);        
+        $pdf->SetWidths(array(6, 14, 20, 120, 25, 20));
+        foreach ($resulMD as $fila) {
+            $pdf->SetAligns(array('R', 'R', 'L', 'L', 'R', 'R'));
+            $pdf->Row(
+                array($fila->Item,number_format($fila->Cantidad, 2, '.', ''),
+                      $this->m_reporte->m_descripcionUm_por_codigo($fila->ID_Unidad), 
+                      utf8_decode($this->m_reporte->m_articulo_por_codigo($fila->ID_Item)),'',''),false);
+        }
+        //***************************************************************************
+        // Position at 1.5 cm from bottom
+        $pdf->SetY(-76);
+        // Arial italic 8
+        $pdf->SetFont('Arial', '', 9);
+        // Page number
+        $pdf->Cell(20, 4, '', 0, 0, 'L');
+        $pdf->Cell(150, 4, utf8_decode('Av. Tomas Valle C/18 Mz. D1 Lt. 18. SMP'), 0, 0, 'L');
+        $pdf->SetY(-73);
+        $pdf->SetFont('Arial', '', 9);
+        $pdf->Cell(20, 4, '', 0, 0, 'L');
+        $pdf->Cell(150, 4, utf8_decode($PDFarray_documento['punto_llegada']), 0, 0, 'L');
+        //***************************************************************************
+        $pdf->Output('guia_remision.pdf', 'I');
+    }
+
+    public function hoja_ruta() {
+        $this->load->library(array('fpdf17/PDF_MC_Table.php'));
+        $this->load->model(array('m_reporte'));
+        $PDFarray_documento = "";        
+        
+        $resulMR = $this->m_reporte->m_listado_ruta_cabecera($_GET['id']);
+        $resulMD = $this->m_reporte->m_listado_ruta_detalle($_GET['id']);
+        
+        foreach ($resulMR as $fila) {
+            $PDFarray_documento['observacion'] = $fila->Observaciones;
+        }
+        
+        $pdf = new PDF_MC_Table();
+        $pdf->AddPage();
+        //Part 1 Header
+        //***************************************************************************
+        $pdf->Image('Logo.JPG', 10, 8, 33);
+        $pdf->SetFont('Arial', 'B', 14);
+        $pdf->Cell(65);
+        $pdf->Cell(47, 3, 'HOJA DE RUTA Nro.'.$_GET['id'], 0, 0);
+        $pdf->Image('Logo.JPG', 10, 8, 33);
+        // Title
+        //$pdf->Cell(24, 3, utf8_decode($PDFarray_documento['o_compra']), 0, 0, 'C');
+        $pdf->Cell(22, 3, '', 0, 0, 'C');
+        //$pdf->Cell(22, 3, utf8_decode($this->RetornarFecha($PDFarray_documento['MCfecha'])), 0, 0, 'C');
+        //Part2 2 Header
+        //***************************************************************************
+        $pdf->Ln(5);
+        $pdf->Cell(65);
+        $pdf->SetFont('Arial', 'B', 9);
+        $pdf->Cell(12, 3, utf8_decode('Chofer: '), 0, 0, 'L');
+        $pdf->SetFont('Arial', '', 9);
+        $pdf->Cell(45, 3, utf8_decode('HEBER SALAZAR MEJIA'), 0, 0, 'L');
+        $pdf->SetFont('Arial', 'B', 9);
+        $pdf->Cell(12, 3, utf8_decode('Unidad: '), 0, 0, 'L');
+        $pdf->SetFont('Arial', '', 9);
+        $pdf->Cell(15, 3, utf8_decode('C5C 850'), 0, 0, 'L');
+        //$pdf->Cell(120, 3, utf8_decode($PDFarray_documento['senores']), 0, 0, 'L');
+        //Part3 3 Header
+        //***************************************************************************
+        $pdf->Ln(8);
+        $pdf->SetFont('Arial', '', 9);
+        $pdf->Cell(10, 3, utf8_decode(''), 0, 0, 'L');
+        //$pdf->Cell(80, 3, utf8_decode($this->m_reporte->m_getdireccionPcliente($PDFarray_documento['ruc_nr'])), 0, 0, 'L');
+        $pdf->Cell(75, 3, '', 0, 0, 'L');
+        $pdf->SetFont('Arial', '', 18);
+        //$pdf->Cell(20, 7, '0018063', 0, 0, 'L');
+        $pdf->Cell(20, 7, '', 0, 0, 'L');
+        $pdf->Ln();
+        //Part4 4 Header
+        //***************************************************************************
+        $pdf->Ln(8);
+        $pdf->SetFont('Arial', 'B', 9);
+        $pdf->Cell(70, 4, 'Observaciones para el conductor', 0, 0, ''); //1
+        $pdf->Cell(44, 4, utf8_decode(''), 0, 0, ''); //3
+        $pdf->Cell(18, 4, utf8_decode(''), 0, 0, 'C'); //4
+        $pdf->Cell(10, 4, utf8_decode(''), 0, 0, 'C'); //5
+        $pdf->Cell(53, 4,  utf8_decode(date('Y-m-d h:i:s')), 0, 0, ''); //6
+        $pdf->Ln();
+        $pdf->Cell(190, 0, '', 1, 0, 'R');
+        //$pdf->Cell(80, 3, utf8_decode($PDFarray_documento['ruc_nr']), 0, 0, 'l');
+        $pdf->Ln();
+        $pdf->SetFont('Arial', '', 9);
+        $pdf->Cell(30, 4, utf8_decode($PDFarray_documento['observacion']), 0, 0, ''); //1
+        $pdf->Cell(84, 4, utf8_decode(''), 0, 0, ''); //3
+        $pdf->Cell(18, 4, utf8_decode(''), 0, 0, 'C'); //4
+        $pdf->Cell(18, 4, utf8_decode(''), 0, 0, 'C'); //5
+        $pdf->Cell(45, 4, '', 0, 0, 'R'); //6
+        //***************************************************************************
+        // Line break
+        $pdf->Ln(12);
+        $pdf->SetFont('Arial', 'B', 7);
+        $pdf->Cell(6, 4, '#', 0, 0, 'R'); //1
+        $pdf->Cell(24, 4, utf8_decode('Nro. G/R'), 0, 0, ''); //2
+        $pdf->Cell(84, 4, utf8_decode('Cliente'), 0, 0, ''); //3
+        $pdf->Cell(18, 4, utf8_decode('Estimada'), 0, 0, 'C'); //4
+        $pdf->Cell(18, 4, utf8_decode('Entregada'), 0, 0, 'C'); //5
+        $pdf->Cell(45, 4, utf8_decode('Observaciones (P/Cliente)'), 0, 0, 'R'); //6
+        $pdf->Ln();
+        $pdf->Cell(190, 0, '', 1, 0, 'R');
+        $pdf->Ln();
+        //Tabla lista productos Cuerpo
+        //***************************************************************************
+        //$array_table = $_POST['lista_productos'];
+        $pdf->SetFont('Arial', '', 8);        
+        $pdf->SetWidths(array(6, 24, 80, 20, 20, 45));//6, 14, 20, 120, 25, 20
+        $pos_item = 1;
+        foreach ($resulMD as $fila) {
+            $pdf->SetAligns(array('R', 'R', '', 'R', 'R', ''));
+            $cliente = $this->m_reporte->m_cliente_x_HR($fila->ID_Documento);
+            $fechaEst = $fila->Fecha_Estimada;$fechaEst = explode(' ', $fechaEst);
+            $fechaEnt = $fila->Fecha_Entregada;
+            $fechaEnt = $fila->Fecha_Estimada;$fechaEnt = explode(' ', $fechaEnt);
+            $pdf->Row( array($pos_item, utf8_decode($fila->ID_Documento), utf8_decode(trim($cliente['razon_social'])), utf8_decode($fechaEst[1]), utf8_decode($fechaEnt[1]), 
+                                        utf8_decode($fila->Observaciones)),false);
+            $pdf->Row( array('', '', utf8_decode(trim($cliente['direccion'])), '', '', ''),false);
+            $pdf->Ln();
+            $pdf->Cell(190, 0, '', 1, 0, 'R');
+            $pdf->Ln();
+            $pos_item++;
+        }
+        
+        $pdf->Output('guia_remision.pdf', 'I');
+    }
+    
+    public function RetornarFecha($date) {
+        $mysqldatetime = strtotime($date);
+        $phpdatetime = date("d/m/Y", $mysqldatetime);
+        return $phpdatetime;
+    }
+
+}
+?>

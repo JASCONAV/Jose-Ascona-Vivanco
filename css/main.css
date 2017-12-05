@@ -1,0 +1,11 @@
+html, body,label,input{
+    font-size: 12px;
+}
+
+.space_top { 
+    padding-top: 60px;
+}
+
+.centrado_etiqueta{
+    text-align: center;
+}

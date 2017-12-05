@@ -1,0 +1,80 @@
+$(function() {
+    $("#BtnCambiarPass").click(function() {
+        if($("#Npass").val() == $("#Rpass").val() && $("#Rpass").val() != '')
+        {       
+            var parametros = {
+                "usuario": $("#usuario").val(),
+                "Npass": $("#Npass").val()
+            };
+            $.ajax({
+                data: parametros,
+                url: 'actualizarPassOperador',
+                type: 'post',
+                async: false,
+                beforeSend: function() {
+                },
+                success: function(data) {
+                    $(".caja_resul").html("<div class='alert alert-success'><strong>Ok!</strong> Contraseña actualizada.....!</div>");
+                },
+                error: function() {
+                }
+            });
+        }else{
+            $(".caja_resul").html("<div class='alert alert-error'><strong>Oh error!</strong> Las contraseñas no cinciden.....!</div>");
+        }
+    });
+});
+
+$(function() {
+    $("#registrar_operador").click(function() {
+        var parametros = {
+            "inputUsuario": $("#inputUsuario").val(),
+            "inputDni": $("#inputDni").val(),
+            "inputClave": $("#inputClave").val(),
+            "inputApMaterno": $("#inputApMaterno").val(),
+            "inputAppaterno": $("#inputAppaterno").val(),
+            "inputNombre": $("#inputNombre").val(),
+            "inputNacimiento": $("#inputNacimiento").val(),
+            "sexo": $("#sexo").val(),
+            "inputTelefono": $("#inputTelefono").val(),
+            "selectTipoUsuario": $("#selectTipoUsuario").val()
+        };
+        $.ajax({
+            data: parametros,
+            url: 'insertar_operador',
+            type: 'post',
+            async: false,
+            beforeSend: function() {
+            },
+            success: function(data) {
+                //$("#resul_cuerpo").html(data);
+                cargar_lista_usuarios();
+                $(".caja_resul").html("<div class='alert alert-success'><strong>Listo!</strong> Datos registrados correctamente.....!</div>");
+            },
+            error: function() {
+            }
+        });
+    });
+});
+
+function cargar_lista_usuarios() {
+        $.ajax({
+            url: 'ListaUsuarios',
+            type: 'post',
+            async: true,
+            beforeSend: function() {
+            },
+            success: function(data) {
+                $("#Lista_usuario").html(data);
+                },
+            error: function() {
+            }
+        });
+ }
+
+$(function() {
+    $("#inputNacimiento").datepicker({
+        defaultDate: "+1w",
+        numberOfMonths: 1
+    });
+});

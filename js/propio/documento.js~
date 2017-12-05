@@ -1,0 +1,92 @@
+$(function() {
+    $("#btn_buscar_solicitante").click(function() {
+        var parametros = {
+            "param": $("#inputbuscarRuc").val()
+        };
+        $.ajax({
+            data: parametros,
+            url: 'get_solicitante_documento',
+            type: 'post',
+            async: false,
+            beforeSend: function() {
+            },
+            success: function(data) {
+                $("#resul_cuerpo").html(data);
+                //alert($("#inputSoliciNomb").val());
+                $("#inputRazonSocial").val($("#inputSoliciNomb").val());
+                $("#inputAppaterno").val($("#inputSoliciApep").val());
+                $("#inputApmaterno").val($("#inputSoliciAma").val());
+                if ($("#inputSoliciNomb").val() == '') {
+                    $(".caja_resul").html("<div class='alert alert-error'><strong>Ok!</strong> Solicitante no encontrado, por favor crear uno nuevo.....!</div>");
+                }
+            },
+            error: function() {
+                $(".caja_resul").html("<div class='alert alert-error'><strong>Oh error!</strong> Informe a sistema de error.....!</div>");
+            }
+        });
+    });
+});
+
+
+$(function() {
+    $("#BuscarDocumentoRecurrente").click(function() {
+        var parametros = {
+            "param": $("#inputTypeBuscarRecurrente").val()
+        };
+        $.ajax({
+            data: parametros,
+            url: 'm_get_recurrente_rd',
+            type: 'post',
+            async: false,
+            beforeSend: function() {
+            },
+            success: function(data) {
+                $("#resul_cuerpo").html(data);
+                $("#inputNombreRecurrente").val($("#inputSoliciNomb").val());
+                $("#inputPaternoRecurrente").val($("#inputSoliciApep").val());
+                $("#inputMaternocurrente").val($("#inputSoliciAma").val());
+            },
+            error: function() {
+            }
+        });
+    });
+});
+
+$(function() {
+    $("#registrar_documento").click(function() {
+        var parametros = {
+            "nroDocumento": $("#inputnumero").val(),
+            "fechaIngreso": $("#inputfecha").val(),
+            "asunto": $("#selectAsunto").val(),
+            "númeroFolios": $("#inputfolios").val(),
+            //"nomUsu": $("#").val(), esto sale del sistema de login
+            "recurrente_codRecu": $("#inputTypeBuscarRecurrente").val(),
+            "solicitante_codSoli": $("#inputbuscarRuc").val(),
+            //"usuario_nomUsu": $("#").val(),, esto sale del sistema de login
+            "tipo_de_documento_codTipoDoc": $("#selectTipo").val(),
+            "tipo_de_carga_codTipoCarga": $("#selectTipoCarga").val()
+        };
+        $.ajax({
+            data: parametros,
+            url: 'insertar_documento',
+            type: 'post',
+            async: false,
+            beforeSend: function() {
+            },
+            success: function(data) {
+                //$("#resul_cuerpo").html(data);
+                $(".caja_resul").html("<div class='alert alert-success'><strong>Listo!</strong> Datos registrados correctamente.....!</div>");
+            },
+            error: function() {
+            }
+        });
+    });
+});
+
+
+$(function() {
+    $(".inputCalendar").datepicker({
+        defaultDate: "+1w",
+        numberOfMonths: 1
+    });
+});

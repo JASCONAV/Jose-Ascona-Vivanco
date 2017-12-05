@@ -1,0 +1,102 @@
+<?php
+
+class m_main extends CI_Model {
+
+    function __construct() {
+        //llamada al constructor del CI para la clase
+        parent::__construct();
+        //Carga el driver de base de datos del codeigniter màs para usar la librerìa que contiene el mysqli
+        $this->load->database();
+    }
+
+    public function m_validar_login($user, $pass) {
+        $query = $this->db->query("SELECT `nomUsu`, `clave` FROM `usuario` where `nomUsu` = '$user' and clave = '$pass';");
+        return $query->result();
+    }
+    
+    public function lista_tipo_carga() {
+        $query = $this->db->query("SELECT `codTipoCarga`, `nomTipoCarga`, `nomSubTipoCarga` FROM `tipo_de_carga`;");
+        return $query->result();
+    }
+    
+    public function m_actualizar_pass_usuario($user, $pass) {
+        $this->db->query("UPDATE `usuario` SET `clave`='$pass' WHERE nomUsu = '$user';");
+    }
+    
+    public function m_get_solicitante_rd($param) {
+        $query = $this->db->query("SELECT nombreSoli,apePatSoli,apeMatSoli FROM cedess64_municipalidad_nuevo.solicitante
+                          where RUC = '$param';");
+        return $query->result();
+    }
+    
+    public function m_lista_tipo_usuario(){
+    	$query = $this->db->query("SELECT * FROM cedess64_municipalidad_nuevo.tipo_usuario;");
+        return $query->result();
+    }        
+    
+    public function m_get_recurrente_rd($param) {
+        $query = $this->db->query("SELECT  nomRecu, apePatrecu, apeMatRecu FROM cedess64_municipalidad_nuevo.recurrente
+                          where numIdentif = '$param';");
+        return $query->result();
+    }
+    
+    public function m_insertar_documento($nroDocumento, $fechaIngreso, $asunto, $numeroFolios, 
+                                         $recurrente_codRecu, $solicitante_codSoli, $usuario_nomUsu, 
+                                         $tipo_de_documento_codTipoDoc, $tipo_de_carga_codTipoCarga ) {
+        $splitFecha = explode("/", $fechaIngreso);
+            $fechaIngreso = $splitFecha[2] . "-" . $splitFecha[1] . "-" . $splitFecha[0];
+        
+        $this->db->query("INSERT INTO  `cedess64_municipalidad_nuevo`.`documento` (
+								`nroDocumento` ,
+								`fechaIngreso` ,
+								`asunto` ,
+								`numeroFolios` ,
+								`recurrente_numIdentif1` ,
+								`solicitante_RUC` ,
+								`usuario_nomUsu` ,
+								`tipo_de_documento_codTipoDoc` ,
+								`tipo_de_carga_codTipoCarga`
+								)
+								VALUES ('$nroDocumento','$fechaIngreso', '$asunto', '$numeroFolios', 
+                                    '$recurrente_codRecu', '$solicitante_codSoli', '$usuario_nomUsu', 
+                                    '$tipo_de_documento_codTipoDoc', '$tipo_de_carga_codTipoCarga');");
+    }
+
+	public function m_insertar_operador($nomUsu,$DNI,$clave,$apeMat,$apePat,$nombre,$fechNac,$sexo,$telefono,$tipo_usuario_codTipoUser){
+		 $splitFecha = explode("/", $fechNac);
+            $fechNac = $splitFecha[2] . "-" . $splitFecha[1] . "-" . $splitFecha[0];
+            $this->db->query("INSERT INTO `cedess64_municipalidad_nuevo`.`usuario`  (`nomUsu`,
+																										`DNI`,
+																										`clave`,
+																										`apeMat`,
+																										`apePat`,
+																										`nombre`,
+																										`fechNac`,
+																										`sexo`,
+																										`telefono`,
+																										`tipo_usuario_codTipoUser`)
+											VALUES
+											( '$nomUsu','$DNI','$clave','$apeMat','$apePat','$nombre',
+											  '$fechNac','$sexo','$telefono','$tipo_usuario_codTipoUser');
+																										");
+		}
+	
+	public function MListaUsuarios() {
+        //Permite que la vista que llame esta función, obtenga la URL del servidor.
+        $this->load->helper('url');
+        $this->load->model('m_almacen');
+        $id = $_POST['idOrdenPedido'];
+        $resul = $this->m_almacen->m_lista_usuarios($id);
+        $item = 1;
+        foreach ($resul as $fila) {
+            echo "<tr><td>$item</td><td>" . $fila->ID_Documento. ' ' . $fila->apePat .''.$fila->apeMat "</td><td>" .
+            $fila->RUC . "</td><td>" . $fila->'nomUsu' . "</td><td>" .
+            $fila->Ref_01 . "</td><td>" .
+            "<td><a>Editer</a><a>Eliminar</a></td></tr>";
+            $item++;
+        }
+    }
+
+}
+
+?>
